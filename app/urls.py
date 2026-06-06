@@ -12,11 +12,13 @@ from core.views import (
     CustomTokenVerifyView,
     UserRegistrationView,
     UserViewSet,
+    CategoriaViewSet,
 )
 
 router = DefaultRouter()
 
 router.register(r'usuarios', UserViewSet, basename='usuarios')
+router.register(r'categorias', CategoriaViewSet, basename='categorias')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
