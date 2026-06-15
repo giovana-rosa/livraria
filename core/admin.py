@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from core import models
 from core.models import Autor, Categoria, Editora, Livro, User
 
-
+@admin.register(User)
 class UserAdmin(BaseUserAdmin):
     """Define the admin pages for users."""
 
