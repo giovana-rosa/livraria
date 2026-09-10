@@ -5,10 +5,13 @@ from core.serializers import CompraSerializer, CompraCreateUpdateSerializer
 
 
 class CompraViewSet(ModelViewSet):
-    queryset = Compra.objects.all()
+    queryset = Compra.objects.order_by("-id")
     serializer_class = CompraSerializer
+    http_method_names = ['get', 'post', 'put', 'delete']
 
     def get_serializer_class(self):
-        if self.action in ('create', 'update', 'partial_update'):
+        if self.action == 'list':
+            return CompraListSerializer
+        if self.action in {'create', 'update'}:
             return CompraCreateUpdateSerializer
         return CompraSerializer
