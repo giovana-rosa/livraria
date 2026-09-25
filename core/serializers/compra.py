@@ -1,4 +1,4 @@
-from rest_framework.serializers import CharField, DecimalField, ModelSerializer, SerializerMethodField, CurrentUserDefault, HiddenField, ValidationError
+from rest_framework.serializers import CharField, DateTimeField, DecimalField, ModelSerializer, SerializerMethodField, CurrentUserDefault, HiddenField, ValidationError
 from core.models import Compra, ItensCompra
 from django.db import transaction
 
@@ -29,11 +29,13 @@ class ItensCompraSerializer(ModelSerializer):
 class CompraSerializer(ModelSerializer):
     usuario = CharField(source='usuario.email', read_only=True)
     status = CharField(source='get_status_display', read_only=True)
+    data_criacao = DateTimeField(auto_now_add=True)
+    data_atualizacao = DateTimeField(auto_now=True)
     itens = ItensCompraSerializer(many=True, read_only=True)
 
     class Meta:
         model = Compra
-        fields = ('id', 'usuario', 'status', 'total', 'itens')
+        fields = ('id', 'usuario', 'status', 'data', 'total', 'itens')
 
 class CompraCreateUpdateSerializer(ModelSerializer):
     itens = ItensCompraCreateUpdateSerializer(many=True)
