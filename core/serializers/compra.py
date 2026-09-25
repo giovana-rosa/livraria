@@ -5,9 +5,9 @@ from django.db import transaction
 class ItensCompraCreateUpdateSerializer(ModelSerializer):
     class Meta:
         model = ItensCompra
-        fields = ('livro', 'quantidade')
+        fields = ('livro', 'quantidade', 'preco')  # mudou
 
-        def validate(self, item):
+    def validate(self, item):
         if item['quantidade'] > item['livro'].quantidade:
             raise ValidationError('Quantidade de itens maior do que a quantidade em estoque.')
         return item
@@ -19,13 +19,12 @@ class ItensCompraSerializer(ModelSerializer):
     capa = CharField(source='livro.capa.url', read_only=True)
     total = SerializerMethodField()
 
-    def get_total(self, item):
-        return item.livro.preco * item.quantidade
+    def get_total(self, instance):
+        return instance.quantidade * instance.preco
 
     class Meta:
         model = ItensCompra
-        fields = ('id', 'titulo', 'editora', 'quantidade', 'preco', 'capa', 'total')
-
+        fields = ('livro', 'quantidade', 'preco', 'total')  # mudou
 
 class CompraSerializer(ModelSerializer):
     usuario = CharField(source='usuario.email', read_only=True)
@@ -46,19 +45,31 @@ class CompraCreateUpdateSerializer(ModelSerializer):
 
     @transaction.atomic
     def update(self, compra, validated_data):
-        itens = validated_data.pop('itens', None)
-        if itens is not None:
+        itens = validated_data.pop('itens')
+        if itens:
             compra.itens.all().delete()
             for item in itens:
+                item['preco'] = item['livro'].preco  # grava o preço histórico
                 ItensCompra.objects.create(compra=compra, **item)
+        compra.save()
         return super().update(compra, validated_data)
+
+    @transaction.atomic
+    def create(self, validated_data):
+        itens = validated_data.pop('itens')
+        compra = Compra.objects.create(**validated_data)
+        for item in itens:
+            item['preco'] = item['livro'].preco # preço do livro no momento da compra
+            ItensCompra.objects.create(compra=compra, **item)
+        compra.save()
+        return compra
 
 class ItensCompraListSerializer(ModelSerializer):
     livro = CharField(source='livro.titulo', read_only=True)
 
     class Meta:
         model = ItensCompra
-        fields = ('quantidade', 'livro')
+        fields = ('quantidade', 'preco', 'livro')
         depth = 1
 
 class CompraListSerializer(ModelSerializer):
@@ -68,11 +79,3 @@ class CompraListSerializer(ModelSerializer):
     class Meta:
         model = Compra
         fields = ('id', 'usuario', 'itens')
-
-class ItensCompraListSerializer(ModelSerializer):
-    livro = CharField(source='livro.titulo', read_only=True)
-
-    class Meta:
-        model = ItensCompra
-        fields = ('quantidade', 'livro')
-        depth = 1
